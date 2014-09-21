@@ -19,27 +19,26 @@
 #ifndef FILE_DEFS_H
 #define FILE_DEFS_H
 
+#include <stdint.h>
+
 namespace RealLib {
 
-typedef long i32;
-typedef unsigned long u32;
+typedef int32_t i32;
+typedef uint32_t u32;
+typedef int64_t i64;
+typedef uint64_t u64;
 
-#define I32_MAX INT_MAX
-#define I32_MIN INT_MIN
+const int I32_MAX = 0x7fffffff;
+const int I32_MIN = -0x80000000;
 
 #if defined(__GNUC__) || defined(__MWERKS__)
 // doesn't define NDEBUG in non-debug builds
 // comment this if you want a debug build
 #define NDEBUG
 
-typedef long long i64;
-typedef unsigned long long u64;
-
 #define NAMESPACE_STD std
 
 #else   // MS Visual C++
-typedef __int64 i64;
-typedef unsigned __int64 u64;
 
 #define NAMESPACE_STD 
 #endif

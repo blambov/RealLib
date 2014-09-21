@@ -41,9 +41,6 @@
 #include "defs.h"
 #include "LongFloat.h"
 
-#define I32_MIN INT_MIN     // to be used as -inf
-#define I32_MAX INT_MAX     // to be used as +inf
-
 namespace RealLib {
 
 class ErrorEstimate {

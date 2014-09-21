@@ -157,7 +157,7 @@ public:
     // removes the part of the approximation interval that is negative
     MachineEstimate TruncateNegative(const char *origin = "Truncate") const
     { if (high < 0) throw DomainException(origin);
-    else return MachineEstimate(max(low, 0), high); }
+    else return MachineEstimate(max(low, 0.0), high); }
 
     // removes the part of the approximation that is below a certain lower bound
     MachineEstimate TruncateBelow(double l, const char *origin = "Truncate") const
