@@ -33,7 +33,7 @@ TYPE Harmonic(unsigned int prec, UserInt len)
 #define PREC 8
 #define INITIALPREC 4
 
-char *s_Harmonic = "s += one / i";
+const char *s_Harmonic = "s += one / i";
 CreateIntRealFunction(Harmonic)
 
 #define MakeFunction(name, operation, extrainit) \
@@ -50,7 +50,7 @@ TYPE name(unsigned int prec, UserInt len) \
     } \
     return s; \
 } \
-	char * s_ ## name = #operation; \
+	const char * s_ ## name = #operation; \
 CreateIntRealFunction(name)
 
 namespace RealLib {

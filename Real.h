@@ -403,7 +403,7 @@ static inline bool operator > (const Real &lhs, const Real &rhs)
 static inline bool operator != (const Real &lhs, const Real &rhs)
 { return (lhs - rhs).IsNonZero(); }
 
-static inline char* NonZeroRealAsDecimal(const Real &arg, char *buffer, unsigned lenwanted) // force non-zero, then convert
+static inline const char* NonZeroRealAsDecimal(const Real &arg, char *buffer, unsigned lenwanted) // force non-zero, then convert
 { if (arg.IsNonZero()) return arg.AsDecimal(buffer, lenwanted); 
   else return "n/a";    }
 
