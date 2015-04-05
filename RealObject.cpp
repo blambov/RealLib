@@ -41,21 +41,21 @@ ObjectList *g_pEstimatesList = NULL;
 
 
 RealObject::RealObject(u32 rc)
-: m_RefCount(rc), m_pPtrInObjList(0), m_pEstimate(NULL), m_Depth(0), m_EstimateRefs(0)
+: m_RefCount(rc), m_pPtrInObjList(0), m_pEstimate(), m_Depth(0), m_EstimateRefs(0)
 {
 }
 
 RealObject::~RealObject()
-{ 
+{
     DestroyEstimate(); 
 }
 
 void RealObject::ReleaseSiblings()
-{ 
+{
 }
 
-RealObject* RealObject::AddRef() 
-{ 
+RealObject* RealObject::AddRef()
+{
     assert(this); 
     ++m_RefCount;
 
@@ -63,25 +63,33 @@ RealObject* RealObject::AddRef()
     // will need one more access to it
     if (m_EstimateRefs) 
         ++m_EstimateRefs;
+
+    //    cout << "AddRef in " << this << " refs " << m_RefCount << " estrefs " << m_EstimateRefs << endl;
     return this; 
 }
 
-void RealObject::Release() 
-{ 
+void RealObject::Release(int ReleaseCachedRefCount)
+{
     assert(this); 
-   assert(m_RefCount > 0);
+    assert(m_RefCount > 0);
 
     // note: we don't decrease m_EstimateRefs
     // this is because destruction happens
     // after the reference has received its evaluation
+    if (m_EstimateRefs)
+        m_EstimateRefs -= ReleaseCachedRefCount;
+    if (m_EstimateRefs <= 0)
+        DestroyEstimate();
+
+    //    cout << "Release in " << this << " rem refs " << m_RefCount-1 << " estrefs " << m_EstimateRefs << endl;
 
     if (--m_RefCount == 0) {
         ReleaseSiblings();
-        delete this; 
+        delete this;
     }
 }
 
-// Encapsulation(prec): returns an estimation of the term
+// GetEstimate(): returns an estimation of the term
 // if it is referenced more than once, a copy of the
 // evaluation is saved for later use
 
@@ -91,18 +99,20 @@ Encapsulation RealObject::GetEstimate()
     assert(m_RefCount > 0);
 
     // is there a condition to destroy the Encapsulation? this is done by FinalizeRealLib
-   //if (m_Precision != 0 && m_Precision < prec) DestroyEstimate();
+    //if (m_Precision != 0 && m_Precision < prec) DestroyEstimate();
+
+    //    cout << "GetEstimate in " << this << " refs " << m_RefCount << " rem estrefs " << m_EstimateRefs-1 << endl;
 
     if (m_pEstimate) {
         // if this is the last time we'll need the Encapsulation
-        if (--m_EstimateRefs == 0) {        
+        if (--m_EstimateRefs == 0) {
             Encapsulation est = *m_pEstimate;
             DestroyEstimate();
             return est;
         } else return *m_pEstimate;
     } else if (m_RefCount > 1) {
         // create a new Encapsulation
-      Encapsulation val(Evaluate());
+        Encapsulation val(Evaluate());
         m_pEstimate = CreateEstimate(val);
         m_EstimateRefs = m_RefCount - 1;
 
@@ -115,55 +125,55 @@ Encapsulation RealObject::GetEstimate()
         m_EstimateRefs = 0;
         return Evaluate();
     }
-        
+
 }
 
 void RealObject::AddToEstimatesList()
 {
-        // save object in g_pEstimatesList
-        m_pPtrInObjList = new ObjectList;
-        assert(m_pPtrInObjList);
-        m_pPtrInObjList->next = g_pEstimatesList;
-        m_pPtrInObjList->prev = NULL;
-        m_pPtrInObjList->obj = this;
-        if (g_pEstimatesList)
-            g_pEstimatesList->prev = m_pPtrInObjList;
-        g_pEstimatesList = m_pPtrInObjList;
+    // save object in g_pEstimatesList
+    m_pPtrInObjList = new ObjectList;
+    assert(m_pPtrInObjList);
+    m_pPtrInObjList->next = g_pEstimatesList;
+    m_pPtrInObjList->prev = NULL;
+    m_pPtrInObjList->obj = this;
+    if (g_pEstimatesList)
+        g_pEstimatesList->prev = m_pPtrInObjList;
+    g_pEstimatesList = m_pPtrInObjList;
 }
 
 void RealObject::RemoveFromEstimatesList()
 {
-        // delete it from g_pEstimatesList
-        assert(m_pPtrInObjList);
-        if (m_pPtrInObjList->prev) {
-            m_pPtrInObjList->prev->next = m_pPtrInObjList->next;
-        } else {
-            g_pEstimatesList = m_pPtrInObjList->next;
-        }
-        if (m_pPtrInObjList->next) {
-            m_pPtrInObjList->next->prev = m_pPtrInObjList->prev;
-        }
-        delete m_pPtrInObjList;
+    // delete it from g_pEstimatesList
+    assert(m_pPtrInObjList);
+    if (m_pPtrInObjList->prev) {
+        m_pPtrInObjList->prev->next = m_pPtrInObjList->next;
+    } else {
+        g_pEstimatesList = m_pPtrInObjList->next;
+    }
+    if (m_pPtrInObjList->next) {
+        m_pPtrInObjList->next->prev = m_pPtrInObjList->prev;
+    }
+    delete m_pPtrInObjList;
 
-        m_pPtrInObjList = NULL;
+    m_pPtrInObjList = NULL;
 }
 
-Encapsulation *RealObject::CreateEstimate(const Encapsulation &val)
+EncapsulationPointer RealObject::CreateEstimate(const Encapsulation &val)
 {
-   AddToEstimatesList();
-   return new Encapsulation(val);
+    AddToEstimatesList();
+    return EncapsulationPointer(val);
 }
 
 // DestroyEstimate(): if the value is cached, destroy it
 // so reevaluation can begin
 
 void RealObject::DestroyEstimate()
-{ 
+{
     if (m_pEstimate) {
-        delete m_pEstimate; 
-        m_pEstimate = NULL;
+        //        cout << "destroying estimate " << *m_pEstimate << endl;
+        m_pEstimate.Release();
 
-      RemoveFromEstimatesList();
+        RemoveFromEstimatesList();
         m_EstimateRefs = 0;
     }
 }
@@ -186,49 +196,6 @@ void RealObject::NonRecursiveRelease()
     if (--m_RefCount == 0)
         delete this;
 }
-
-/* obsolete
-bool RealObject::HasEstimateReference(i32 Depth)
-{
-    // return true if there is an Encapsulation, or if the object
-    // is already visited.
-    if (m_EstimateRefs == 0 && m_Depth >= Depth) {
-        m_EstimateRefs = 1;
-        return false;
-    } else return true;
-}
-
-bool RealObject::StartRelease(i32 Depth)
-{
-   if (m_Depth < Depth) {
-      // release siblings so that combined with FinishRelease it does a full release
-      if (--m_RefCount == 0) ReleaseSiblings();
-      return true;
-   }
-   return --m_RefCount > 0;  
-}
-
-void RealObject::FinishRelease()
-{
-    // release the object, but do not release siblings if it
-    // is deleted. They have already been visited 
-    // (FinishRelease is called on GetDepthList exit,
-    // from the bottom up)
-    assert(this);
-    assert(m_RefCount >= 0);
-
-    if (m_RefCount == 0)
-        delete this;
-}
-
-void RealObject::GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst)
-{
-   pList; DiveIntoDeeperFirst;
-    // no siblings. only take care to call Test and OnExit
-    (this->*Test)(Depth);
-   if (OnExit) (this->*OnExit)();
-}
-*/
 
 // real from double
 
@@ -255,7 +222,14 @@ RealFromString::RealFromString(const char *src)
     assert(src);
     m_pString = new char[strlen(src) + 1];
     assert(m_pString);
+#ifdef _MSC_VER
+#pragma warning (push)
+#pragma warning (disable:4996)
     strcpy(m_pString, src);
+#pragma warning (pop)
+#else
+    strcpy(m_pString, src);
+#endif
 }
 
 RealFromString::~RealFromString()
@@ -290,10 +264,10 @@ Encapsulation RealFromOracle::Evaluate()
     else len = i32(eptr - val);
     double exp = -len * LOG_2_10;
     double man = (exp - floor(exp)) / LOG_2_10;
-   Encapsulation e(val);
-   Encapsulation err(man);
-   err = err << i32(floor(exp));
-   return e.AddError(err);
+    Encapsulation e(val);
+    Encapsulation err(man);
+    err = err << i32(floor(exp));
+    return e.AddError(err);
 }
 
 // real nullary (constants)
@@ -320,7 +294,7 @@ RealUnary::RealUnary(FuncUnary pFunc, RealObject *pArg, UserInt user)
 {
     assert(pFunc);
     assert(pArg);
-    
+
     // reference the sibling
     pArg->AddRef();
 
@@ -348,89 +322,6 @@ RealObject* RealUnary::GetSibling(int index)
     return index == 0 ? m_pArg : NULL;
 }
 
-/* obsolete
-void RealUnary::GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst)
-{
-    // do we need to continue?
-    if (!(Test && (this->*Test)(Depth))) {
-       // have we reached maximum depth?
-       if (Depth <= 1) {
-           if (pList) {
-               EvalList *pNew = new EvalList;
-               pNew->next = *pList;
-               pNew->obj = AddRef();
-               pNew->used = false;
-               *pList = pNew;
-           }
-       } else {
-           // continue with sibling
-           m_pArg->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-       }
-   }
-
-   // clean up
-   if (OnExit) (this->*OnExit)();
-}
-*/
-// binary on int
-/*
-RealBinaryOnInt::RealBinaryOnInt(FuncBinaryOnInt pFunc, RealObject *pArg, long iarg)
-: m_pFunc(pFunc), m_pArg(pArg), m_iArg(iarg)
-{
-    assert(pFunc);
-    assert(pArg);
-    
-    // reference the sibling
-    pArg->AddRef();
-
-    // mark the depth
-    m_Depth = pArg->m_Depth + 1;
-}
-
-RealBinaryOnInt::~RealBinaryOnInt()
-{
-}
-
-void RealBinaryOnInt::ReleaseSiblings()
-{
-    m_pArg->Release();
-}
-
-// evaluate: evaluate argument, apply function to it
-Encapsulation RealBinaryOnInt::Evaluate()
-{
-    return m_pFunc(m_pArg->GetEstimate(), m_iArg);
-}
-
-RealObject* RealBinaryOnInt::GetSibling(int index)
-{
-    return index == 0 ? m_pArg : NULL;
-}*/
-
-/* obsolete
-void RealBinaryOnInt::GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst)
-{
-    // do we need to continue?
-    if (!(Test && (this->*Test)(Depth))) {
-       // have we reached maximum depth?
-       if (Depth <= 1) {
-           if (pList) {
-               EvalList *pNew = new EvalList;
-               pNew->next = *pList;
-               pNew->obj = AddRef();
-               pNew->used = false;
-               *pList = pNew;
-           }
-       } else {
-           // continue with sibling
-           m_pArg->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-       }
-   }
-
-   // clean up
-   if (OnExit) (this->*OnExit)();
-}
-*/
 
 // binary
 
@@ -466,107 +357,82 @@ Encapsulation RealBinary::Evaluate()
 
 RealObject* RealBinary::GetSibling(int index)
 {
-    return index == 0 ? m_pLeft : index == 1 ? m_pRight : NULL;
-}
+    if (index == 0) {
+        if (m_pLeft->m_Depth <= m_pRight->m_Depth) return m_pRight;
+        else return m_pLeft;
+    } else if (index == 1) {
+        if (m_pLeft->m_Depth <= m_pRight->m_Depth) return m_pLeft;
+        else return m_pRight;
+    } else return NULL;
 
-/* obsolete
-void RealBinary::GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst)
-{
-    // do we need to continue?
-    if (!(Test && (this->*Test)(Depth))) {
-       // have we reached maximum depth?
-       if (Depth <= 1) {
-           if (pList) {
-               EvalList *pNew = new EvalList;
-               pNew->next = *pList;
-               pNew->obj = AddRef();
-               pNew->used = false;
-               *pList = pNew;
-           }
-       } else {
-           // continue with the sibling with greater or lower depth first
-         // depending on DiveIntoDeeperFirst flag.
-           // otherwise a previous run might have marked visited
-           // something that could lead to a deeper dive on evaluation
-           if ((m_pLeft->m_Depth >= m_pRight->m_Depth) == DiveIntoDeeperFirst) {
-               m_pLeft->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-               m_pRight->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-           } else {
-               m_pRight->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-               m_pLeft->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-           }
-      }
-   }
-
-   // clean up
-   if (OnExit) (this->*OnExit)();
+    //return index == 0 ? m_pLeft : (index == 1 ? m_pRight : NULL);
 }
-*/
 
 // RealArray implementation
 
 RealArray::RealArray(FuncArray pFunc, RealObject **pArray, unsigned int count, UserInt userdata)
 : m_pFunc(pFunc), m_pArray(pArray), m_uCount(count), m_iUserData(userdata)
 {
-   assert(pFunc);
-   assert(pArray);
-   // references should have already been added
+    assert(pFunc);
+    assert(pArray);
+    // references should have already been added
 
-   u32 depth = 0;
-   for (u32 i=0;i<count;++i)
-      depth = max(i32(depth), pArray[i]->m_Depth);
-   m_Depth = depth + 1;
+    u32 depth = 0;
+    for (u32 i=0;i<count;++i)
+        depth = max(i32(depth), pArray[i]->m_Depth);
+    m_Depth = depth + 1;
 }
 
 RealArray::~RealArray()
 {
-   DestroyEstimate();
-//   assert(!m_pEstimateArray);
-   delete m_pArray;
+    DestroyEstimate();
+    //   assert(!m_pEstimateArray);
+    delete m_pArray;
 }
 
 void RealArray::SetRequestIndex(i32 index)
-{ 
-   assert(index >= 0 && index < i32(m_uCount)); 
-   m_uRequestIndex = index; 
-   if (m_pEstimate) m_pEstimate = m_pEstimateArray + index; 
+{
+    assert(index >= 0 && index < i32(m_uCount)); 
+    m_uRequestIndex = index; 
+    if (m_pEstimate) m_pEstimate = m_pEstimateArray + index; 
 }
 
 void RealArray::ReleaseSiblings()
 {
-   for (u32 i=0;i<m_uCount;++i)
-      m_pArray[i]->Release();
+    for (u32 i=0;i<m_uCount;++i)
+        m_pArray[i]->Release();
 }
 
-Encapsulation* RealArray::CreateEstimate(const Encapsulation &val)
+EncapsulationPointer RealArray::CreateEstimate(const Encapsulation &val)
 {
-   val;
-   // the actual job is done by Evaluate
-   // only return the pointer
-   return m_pEstimateArray + m_uRequestIndex;
+    val;
+    // the actual job is done by Evaluate
+    // only return the pointer
+    return EncapsulationPointer::FromPointer
+            (m_pEstimateArray + m_uRequestIndex);
 }
 
 void RealArray::DestroyEstimate()
 {
-   if (m_pEstimateArray) {
-      delete [] m_pEstimateArray;
-      m_pEstimateArray = m_pEstimate = NULL;
+    if (m_pEstimateArray) {
+        m_pEstimateArray.ReleaseArray(m_uCount);
+        m_pEstimate = EncapsulationPointer();
         m_EstimateRefs = 0;
-      RemoveFromEstimatesList();
-   }
+        RemoveFromEstimatesList();
+    }
 }
 
 Encapsulation RealArray::Evaluate()
 {
-   m_pEstimateArray = new Encapsulation[m_uCount];
-   AddToEstimatesList();
+    m_pEstimateArray = EncapsulationPointer(m_uCount);
+    AddToEstimatesList();
 
-   for (u32 i=0;i<m_uCount;++i)
-      m_pEstimateArray[i] = m_pArray[i]->GetEstimate();
+    for (u32 i=0;i<m_uCount;++i)
+        m_pEstimateArray[i] = m_pArray[i]->GetEstimate();
     ArrayInterface<Encapsulation> arr(m_pEstimateArray, m_uCount);
-   m_pFunc(arr, m_iUserData);
+    m_pFunc(arr, m_iUserData);
 
-   return m_pEstimateArray[m_uRequestIndex];
+    return m_pEstimateArray[m_uRequestIndex];
 }
 
 RealObject* RealArray::GetSibling(int index)
@@ -574,56 +440,11 @@ RealObject* RealArray::GetSibling(int index)
     return u32(index) < m_uCount ? m_pArray[index] : NULL;
 }
 
-/* obsolete
-bool RealObjectDeeper(RealObject *left, RealObject *right)
-{
-   return left->m_Depth >= right->m_Depth;
-}
-
-void RealArray::GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst)
-{
-    // do we need to continue?
-    if (!(Test && (this->*Test)(Depth))) {
-       // have we reached maximum depth?
-       if (Depth <= 1) {
-           if (pList) {
-               EvalList *pNew = new EvalList;
-               pNew->next = *pList;
-               pNew->obj = AddRef();
-               pNew->used = false;
-               *pList = pNew;
-           }
-       } else {
-           // continue with siblings
-         using namespace std;
-
-//         vector<RealObject*> arr(vector<RealObject*>::iterator(m_pArray), 
-//                                 vector<RealObject*>::iterator(m_pArray + m_uCount));//
-                                 
-         vector<RealObject*> arr(m_uCount);
-         for (u32 i=0;i<m_uCount;++i)
-            arr.push_back(m_pArray[i]);
-         sort(arr.begin(), arr.end(), RealObjectDeeper);
-
-         if (DiveIntoDeeperFirst)
-            for (vector<RealObject*>::iterator it=arr.begin();it!=arr.end();++it)
-                 (*it)->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-         else
-            for (vector<RealObject*>::reverse_iterator it=arr.rbegin();it!=arr.rend();++it)
-                 (*it)->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-       }
-   }
-
-   // clean up
-   if (OnExit) (this->*OnExit)();
-}
-*/
-
 RealArrayElement::RealArrayElement(RealArray *pArray, u32 myindex)
 : m_pArray(pArray), m_uMyIndex(myindex)
 {
-   pArray->AddRef();
-   m_Depth = (pArray->m_Depth + 1);
+    pArray->AddRef();
+    m_Depth = (pArray->m_Depth + 1);
 }
 
 RealArrayElement::~RealArrayElement()
@@ -632,69 +453,30 @@ RealArrayElement::~RealArrayElement()
 
 void RealArrayElement::ReleaseSiblings()
 {
-   m_pArray->Release();
+    m_pArray->Release();
 }
 
-Encapsulation* RealArrayElement::CreateEstimate(const Encapsulation &val)
+EncapsulationPointer RealArrayElement::CreateEstimate(const Encapsulation &val)
 {
-   // the Encapsulation is already saved in the array
-   return m_pArray->CreateEstimate(val);
+    // the Encapsulation is already saved in the array
+    return m_pArray->CreateEstimate(val);
 }
 
 void RealArrayElement::DestroyEstimate()
 {
-   // do nothing, the array will clean it
-   m_pEstimate = NULL;
+    // do nothing, the array will clean it
+    m_pEstimate = EncapsulationPointer();
 }
 
 Encapsulation RealArrayElement::Evaluate()
 {
-   m_pArray->SetRequestIndex(m_uMyIndex);
-   return m_pArray->GetEstimate();
+    m_pArray->SetRequestIndex(m_uMyIndex);
+    return m_pArray->GetEstimate();
 }
 
 RealObject* RealArrayElement::GetSibling(int index)
 {
     return index == 0 ? m_pArray : NULL;
 }
-
-/* obsolete
-void RealArrayElement::GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst)
-{
-    // do we need to continue?
-    if (!(Test && (this->*Test)(Depth))) {
-       // have we reached maximum depth?
-       if (Depth <= 1) {
-           if (pList) {
-               EvalList *pNew = new EvalList;
-               pNew->next = *pList;
-               pNew->obj = AddRef();
-               pNew->used = false;
-               *pList = pNew;
-           }
-       } else {
-           // continue with sibling
-           m_pArray->GetDepthList(Depth-1, Test, OnExit, pList, DiveIntoDeeperFirst);
-       }
-   }
-
-   // clean up
-   if (OnExit) (this->*OnExit)();
-}
-*/
-
-/*
-bool RealObject::HasEstimate()
-{
-    return m_pEstimate != 0;
-}
-
-void RealObject::SetEstimateReference()
-{
-    ++m_EstimateRefs;
-}
-
-
-*/
 
 }  // namespace

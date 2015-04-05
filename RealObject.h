@@ -32,7 +32,7 @@
   to never introduce extra calculation or extra storage than
   what is minimally needed, and what is actually needed.
 
-*/
+ */
 
 #ifndef FILE_REALOBJECT_H
 #define FILE_REALOBJECT_H
@@ -43,7 +43,7 @@ namespace RealLib {
 
 struct ObjectList;
 struct EvalList;
-    
+
 // g_pEstimatesList stores pointers to all temporary estimates
 // it is used to delete them in case of library Reset (precision
 // change), when they become invalid
@@ -52,7 +52,7 @@ extern ObjectList *g_pEstimatesList;
 typedef const char* (*OracleFunction) (unsigned precision);
 
 // prec and the Encapsulation working precision will grow together
-    
+
 // RealObject: the abstract base class
 
 class RealObject {
@@ -63,10 +63,10 @@ class RealObject {
 
 protected:
     // temporary Encapsulation
-    Encapsulation *m_pEstimate;
+    EncapsulationPointer m_pEstimate;
 
     RealObject(u32 rc = 0);
-    
+
     // evaluation procedure. 
     // To be overridden by implementations
     virtual Encapsulation Evaluate() = 0;
@@ -88,23 +88,23 @@ public:
 
     // get the Encapsulation, evaluate if necessary
     Encapsulation GetEstimate();
-   // do we hold an Encapsulation?
-   bool HasEstimate()
-   { return !!m_pEstimate; }
+    // do we hold an Encapsulation?
+    bool HasEstimate()
+    { return m_pEstimate; }
 
-   void AddToEstimatesList();
-   void RemoveFromEstimatesList();
+    void AddToEstimatesList();
+    void RemoveFromEstimatesList();
 
     // create a new Encapsulation (differs only in arrays, usually new Encapsulation (val))
-   // and add to g_pEstimatesList
-   virtual Encapsulation *CreateEstimate(const Encapsulation &val);
-   // destroy the Encapsulation and remove this object from g_pEstimatesList
+    // and add to g_pEstimatesList
+    virtual EncapsulationPointer CreateEstimate(const Encapsulation &val);
+    // destroy the Encapsulation and remove this object from g_pEstimatesList
     virtual void DestroyEstimate();
 
     // add reference. Called when a pointer to this object is saved
     RealObject* AddRef();
     // release: decreases refcount and deletes object if rc == 0
-    void Release();
+    void Release(int DecreaseCachedRefCount = 0);
     // get the reference count
     u32 GetRefCount() 
     { return m_RefCount; }
@@ -115,9 +115,9 @@ public:
     virtual RealObject* GetSibling(int index);
     // non-recursive release, to be combined with GetSibling
     void NonRecursiveRelease();
-    
+
     /* obsolete older version
-    
+
     // gets all objects that need to be pre-evaluated
     // for the evaluation procedure not to dig deeper
     // than the required level. calls testers to see
@@ -128,18 +128,18 @@ public:
     typedef void (RealObject::*OnExitFunc)();
 
     virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
-    
+
    // tester for depth-restricted evaluation
    // no OnExit needed
    bool HasEstimateReference(i32 Depth);  // stops if m_EstimateRefs > 0, marks if already visited
                                           // followed by evaluation which cleans marks
-   
+
    // tester/OnExit pair for depth-restricted release
    bool StartRelease(i32 Depth); // decreases m_RefCount, stops if > 0, or if Depth < m_Depth with ReleaseSiblings()
    void FinishRelease();         // cleans-up object without releasing siblings if m_RefCount == 0
-    */
+     */
 
-   /*
+    /*
    // testers if depth search can be stopped
     // decreases refcount, returns true if > 0
     bool WontBeDeleted();
@@ -152,7 +152,7 @@ public:
     void NonRecursiveRelease();
     // not used
     void SetEstimateReference();
-   */
+     */
 };
 
 struct ObjectList {
@@ -261,7 +261,7 @@ private:
     FuncBinaryOnInt m_pFunc;
     RealObject *m_pArg;
     long m_iArg;
-    
+
 protected:
     virtual ~RealBinaryOnInt();
     virtual void ReleaseSiblings();
@@ -283,42 +283,42 @@ public:
 class RealArray : public RealObject {
 public:
     typedef void (*FuncArray) (ArrayInterface<Encapsulation>&, UserInt otherData);
-   //typedef void (*FuncArray) (Encapsulation* arr, unsigned int count, void* userdata);
+    //typedef void (*FuncArray) (Encapsulation* arr, unsigned int count, void* userdata);
 private:
-   FuncArray m_pFunc;
-   RealObject **m_pArray;
-   Encapsulation *m_pEstimateArray;
-   u32 m_uCount;
-   UserInt m_iUserData;
-   i32 m_uRequestIndex;
+    FuncArray m_pFunc;
+    RealObject **m_pArray;
+    EncapsulationPointer m_pEstimateArray;
+    u32 m_uCount;
+    UserInt m_iUserData;
+    i32 m_uRequestIndex;
 
 protected:
-   virtual ~RealArray();
-   virtual void ReleaseSiblings();
-   virtual Encapsulation Evaluate();
+    virtual ~RealArray();
+    virtual void ReleaseSiblings();
+    virtual Encapsulation Evaluate();
 public:
-   virtual Encapsulation *CreateEstimate(const Encapsulation &val);
-   virtual void DestroyEstimate();
-   void SetRequestIndex(i32 index);
+    virtual EncapsulationPointer CreateEstimate(const Encapsulation &val);
+    virtual void DestroyEstimate();
+    void SetRequestIndex(i32 index);
 
-   //virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
-   RealArray(FuncArray pFunc, RealObject **pArray, unsigned int count, UserInt user);   
+    //virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
+    RealArray(FuncArray pFunc, RealObject **pArray, unsigned int count, UserInt user);
     virtual RealObject* GetSibling(int index);
 };
 
 class RealArrayElement : public RealObject {
 private:
-   RealArray* m_pArray;
-   u32 m_uMyIndex;
+    RealArray* m_pArray;
+    u32 m_uMyIndex;
 protected:
-   virtual ~RealArrayElement();
-   virtual void ReleaseSiblings();
-   virtual Encapsulation Evaluate();
+    virtual ~RealArrayElement();
+    virtual void ReleaseSiblings();
+    virtual Encapsulation Evaluate();
 public:
-   virtual Encapsulation *CreateEstimate(const Encapsulation &val);
-   virtual void DestroyEstimate();
-   //virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
-   RealArrayElement(RealArray *pArray, u32 myindex);    
+    virtual EncapsulationPointer CreateEstimate(const Encapsulation &val);
+    virtual void DestroyEstimate();
+    //virtual void GetDepthList(i32 Depth, TesterFunc Test, OnExitFunc OnExit, EvalList **pList, bool DiveIntoDeeperFirst);
+    RealArrayElement(RealArray *pArray, u32 myindex);
     virtual RealObject* GetSibling(int index);
 };
 

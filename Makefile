@@ -1,5 +1,9 @@
 CXX = g++
-CXXFLAGS = -O3 
+CXXFLAGS := -O3 
+
+ifeq ($(USE_SSE),1)
+  CXXFLAGS := $(CXXFLAGS) -msse2
+endif
 
 FLAGS_TO_PASS = \
 	"CXX = $(CXX)" \

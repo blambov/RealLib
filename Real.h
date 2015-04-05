@@ -24,7 +24,7 @@
   library. It can be used like a normal built-in scalar, and
   provides useful conversions and tests. 
 
-*/
+ */
 
 #ifndef FILE_REAL_H
 #define FILE_REAL_H
@@ -88,13 +88,16 @@ std::istream& operator >>(std::istream &in, Real &r);
 // template <class TYPE>
 // class ArrayTemplate {
 // public:
-//  long size();
-//  TYPE& operator[] (long index);  // no bounds checking!
+//   long size();
+//   TYPE& operator[] (long index);  // no bounds checking!
 // };
 typedef void (*RealFuncArray) (ArrayInterface<Encapsulation> &arr, UserInt userData);
 
 template <class ARRAY>
 void RealApplyArrayFunction(RealFuncArray arfunc, ARRAY &arr, UserInt user);
+
+template <class TYPE>
+class RealClassBase;
 
 // the main object. can be used like a built-in type
 class Real {
@@ -112,27 +115,29 @@ public:
     //typedef Encapsulation (*FuncBinary) (const Encapsulation &left, const Encapsulation &right);
     //typedef Encapsulation (*FuncBinaryOnInt) (const Encapsulation &left, long right);
     //typedef void (*FuncArray) (Encapsulation *array, unsigned int count, void *userData);
-//   typedef Encapsulation (*FuncVector) (std::vector<Encapsulation&> vec);
-   
-   // copy constructor
+    //   typedef Encapsulation (*FuncVector) (std::vector<Encapsulation&> vec);
+
+    // copy constructor
     Real(const Real &src);
 
     // conversion from other types
     Real(const double src = 0);
     Real(const char *src);
 
-   // reals created by operations
+    // reals created by operations
     Real(OracleFunction oracle);  // real constant by oracle, i.e. function returning char*
-   Real(FuncNullary constant, UserInt user);   // real constant by nullary function. i.e. returning Encapsulation
-   //Real(FuncUnary unfunc, const Real &rhs);
-   //Real(FuncBinary binfunc, const Real &lhs, const Real &rhs);
-   Real(FuncUnary unfunc, const Real &rhs, UserInt user);
-   Real(FuncBinary binfunc, const Real &lhs, const Real &rhs, UserInt user);
-   //Real(FuncBinaryOnInt binfunc, const Real &lhs, long rhs);
-   
+    Real(FuncNullary constant, UserInt user);   // real constant by nullary function. i.e. returning Encapsulation
+    //Real(FuncUnary unfunc, const Real &rhs);
+    //Real(FuncBinary binfunc, const Real &lhs, const Real &rhs);
+    Real(FuncUnary unfunc, const Real &rhs, UserInt user);
+    Real(FuncBinary binfunc, const Real &lhs, const Real &rhs, UserInt user);
+    //Real(FuncBinaryOnInt binfunc, const Real &lhs, long rhs);
+
     template <class ARRAY>
     friend void RealApplyArrayFunction(RealFuncArray arfunc, ARRAY &arr, UserInt user);
 
+    template <class TYPE>
+    friend class RealClassBase;
 
     // assignment
     Real& operator = (const Real &rhs);
@@ -148,34 +153,34 @@ public:
     Real operator - () const;
 
     // comparison operator, semi-decidable
-   bool IsNegative() const;
-   bool IsPositive() const;
-   bool IsNonZero() const;
+    bool IsNegative() const;
+    bool IsPositive() const;
+    bool IsNonZero() const;
 
     const Real& ForceNonZero() const
     { IsNonZero();
-      return *this; }
+    return *this; }
 
     // shorthands
     Real& operator += (const Real &rhs)
-    { return *this = *this + rhs; }
+          { return *this = *this + rhs; }
     Real& operator -= (const Real &rhs)
-    { return *this = *this - rhs; }
+          { return *this = *this - rhs; }
     Real& operator *= (const Real &rhs)
-    { return *this = *this * rhs; }
+          { return *this = *this * rhs; }
     Real& operator /= (const Real &rhs)
-    { return *this = *this / rhs; }
-    
+          { return *this = *this / rhs; }
+
     Real& operator *= (int rhs)
-    { return *this = *this * rhs; }
+          { return *this = *this * rhs; }
     Real& operator /= (int rhs)
-    { return *this = *this / rhs; }
-    
+          { return *this = *this / rhs; }
+
     Real& operator *= (double rhs)
-    { return *this = *this * Real(rhs); }
+          { return *this = *this * Real(rhs); }
     Real& operator /= (double rhs)
-    { return *this = *this / Real(rhs); }
-    
+          { return *this = *this / Real(rhs); }
+
     friend std::ostream& operator <<(std::ostream &out, const Real& r);
     friend std::istream& operator >>(std::istream &in, Real &r);
 
@@ -185,166 +190,166 @@ public:
 // functions on Reals have to be declared as one of
 
 /*
-    // nullary real function (constant)
-    template <class TYPE>
-    TYPE name(unsigned int prec);
+  // nullary real function (constant)
+  template <class TYPE>
+  TYPE name(unsigned int prec);
 
-    // nullary real function with integer argument
-    template <class TYPE>
-    TYPE name(unsigned int prec, UserInt uint);
+  // nullary real function with integer argument
+  template <class TYPE>
+  TYPE name(unsigned int prec, UserInt uint);
 
-    // unary real function
-    template <class TYPE>
-    TYPE name(const TYPE &arg);
+  // unary real function
+  template <class TYPE>
+  TYPE name(const TYPE &arg);
 
-    // unary real function with integer argument
-    template <class TYPE>
-    TYPE name(const TYPE& arg, UserInt uint);
+  // unary real function with integer argument
+  template <class TYPE>
+  TYPE name(const TYPE& arg, UserInt uint);
 
-    // binary real function
-    template <class TYPE>
-    TYPE name(const TYPE &lhs, const TYPE &rhs);
+  // binary real function
+  template <class TYPE>
+  TYPE name(const TYPE &lhs, const TYPE &rhs);
 
-    // binary real function with integer argument
-    template <class TYPE>
-    TYPE name(const TYPE& lhs, const TYPE &rhs, UserInt uint);
+  // binary real function with integer argument
+  template <class TYPE>
+  TYPE name(const TYPE& lhs, const TYPE &rhs, UserInt uint);
 
-    // real function on array
-    template <class TYPE, class ARRAY>
-    TYPE name(ARRAY &arg);
+  // real function on array
+  template <class TYPE, class ARRAY>
+  TYPE name(ARRAY &arg);
 
-    // real function on array with integer argument
-    template <class TYPE>
-    TYPE name(ARRAY &arg, UserInt int);
+  // real function on array with integer argument
+  template <class TYPE>
+  TYPE name(ARRAY &arg, UserInt int);
 
-    // where Array has the following interface
-    template <class TYPE>
-    class ArrayInterface {
-    public:
-        long size();
-        TYPE& operator[] (long index);  
-    };
-*/
+  // where Array has the following interface
+  template <class TYPE>
+  class ArrayInterface {
+  public:
+     long size();
+     TYPE& operator[] (long index);  
+  };
+ */
 
 
 #define CreateRealConstant(const_name, func_name) \
-    Encapsulation func_name ## Encapsulation(unsigned int prec, UserInt user) { \
-        if (UsingMachinePrecision) return func_name<MachineEstimate>(prec); \
-        else return func_name<Estimate>(prec); \
-    } \
-    const Real const_name(func_name ## Encapsulation, 0);
+        Encapsulation func_name ## Encapsulation(unsigned int prec, UserInt user) { \
+    if (UsingMachinePrecision) return func_name<MachineEstimate>(prec); \
+    else return func_name<Estimate>(prec); \
+} \
+const Real const_name(func_name ## Encapsulation, 0);
 
 #define CreateNullaryRealFunction(name) \
-    Encapsulation name ## Encapsulation(unsigned int prec, UserInt user) { \
-        if (UsingMachinePrecision) return name<MachineEstimate>(prec); \
-        else return name<Estimate>(prec); \
-    } \
-    Real name() { \
-        return Real(name ## Encapsulation, 0); \
-    }
+        Encapsulation name ## Encapsulation(unsigned int prec, UserInt user) { \
+    if (UsingMachinePrecision) return name<MachineEstimate>(prec); \
+    else return name<Estimate>(prec); \
+} \
+Real name() { \
+    return Real(name ## Encapsulation, 0); \
+}
 
 #define CreateIntRealFunction(name) \
-    Encapsulation name ## Encapsulation(unsigned int prec, UserInt user) { \
-        if (UsingMachinePrecision) return name<MachineEstimate>(prec, user); \
-        else return name<Estimate>(prec, user); \
-    } \
-    Real name(UserInt user) { \
-        return Real(name ## Encapsulation, user); \
-    }
+        Encapsulation name ## Encapsulation(unsigned int prec, UserInt user) { \
+    if (UsingMachinePrecision) return name<MachineEstimate>(prec, user); \
+    else return name<Estimate>(prec, user); \
+} \
+Real name(UserInt user) { \
+    return Real(name ## Encapsulation, user); \
+}
 
 #define CreateUnaryRealFunction(name) \
-    Encapsulation name ## Encapsulation(const Encapsulation &arg, UserInt user) { \
-        if (UsingMachinePrecision) return name(arg.m_mach); \
-        else return name(arg.m_est); \
-    } \
-    Real name(const Real &arg) { \
-        return Real(name ## Encapsulation, arg, 0); \
-    }
+        Encapsulation name ## Encapsulation(const Encapsulation &arg, UserInt user) { \
+    if (UsingMachinePrecision) return name(arg.roMachineEstimate()); \
+    else return name(arg.roEstimate()); \
+} \
+Real name(const Real &arg) { \
+    return Real(name ## Encapsulation, arg, 0); \
+}
 
 #define CreateUnaryAndIntRealFunction(name) \
-    Encapsulation name ## Encapsulation(const Encapsulation &arg, UserInt user) { \
-        if (UsingMachinePrecision) return name(arg.m_mach, user); \
-        else return name(arg.m_est, user); \
-    } \
-    Real name(const Real &arg, UserInt rhs) { \
-        return Real(name ## Encapsulation, arg, rhs); \
-    }
+        Encapsulation name ## Encapsulation(const Encapsulation &arg, UserInt user) { \
+    if (UsingMachinePrecision) return name(arg.roMachineEstimate(), user); \
+    else return name(arg.roEstimate(), user); \
+} \
+Real name(const Real &arg, UserInt rhs) { \
+    return Real(name ## Encapsulation, arg, rhs); \
+}
 
 #define CreateBinaryRealFunction(name) \
-    Encapsulation name ## Encapsulation(const Encapsulation &lhs, const Encapsulation &rhs, UserInt user) { \
-        if (UsingMachinePrecision) return name(lhs.m_mach, rhs.m_mach); \
-        else return name(lhs.m_est, rhs.m_est); \
-    } \
-    Real name(const Real &arg, const Real &rhs) { \
-        return Real(name ## Encapsulation, arg, rhs, 0); \
-    }
+        Encapsulation name ## Encapsulation(const Encapsulation &lhs, const Encapsulation &rhs, UserInt user) { \
+    if (UsingMachinePrecision) return name(lhs.roMachineEstimate(), rhs.roMachineEstimate()); \
+    else return name(lhs.roEstimate(), rhs.roEstimate()); \
+} \
+Real name(const Real &arg, const Real &rhs) { \
+    return Real(name ## Encapsulation, arg, rhs, 0); \
+}
 
 #define CreateBinaryAndIntRealFunction(name) \
-    Encapsulation name ## Encapsulation(const Encapsulation &lhs, const Encapsulation &rhs, UserInt user) { \
-        if (UsingMachinePrecision) return name(lhs.m_mach, rhs.m_mach, user); \
-        else return name(lhs.m_est, rhs.m_est, user); \
-    } \
-    Real name(const Real &arg, const Real &rhs, UserInt user) { \
-        return Real(name ## Encapsulation, arg, rhs, user); \
-    }
+        Encapsulation name ## Encapsulation(const Encapsulation &lhs, const Encapsulation &rhs, UserInt user) { \
+    if (UsingMachinePrecision) return name(lhs.roMachineEstimate(), rhs.roMachineEstimate(), user); \
+    else return name(lhs.roEstimate(), rhs.roEstimate(), user); \
+} \
+Real name(const Real &arg, const Real &rhs, UserInt user) { \
+    return Real(name ## Encapsulation, arg, rhs, user); \
+}
 
 /*
 #define CreateArrayAndOtherDataRealFunction(name) \
-    void name ## Encapsulation(ArrayInterface<Encapsulation> &arr, void *otherData) { \
-        if (UsingMachinePrecision) name(ArrayInterface<MachineEstimate, sizeof Encapsulation>(&arr[0].m_mach, arr.size()), otherData); \
-        else name(ArrayInterface<Estimate, sizeof Encapsulation>(&arr[0].m_est, arr.size()), otherData); \
-    } \
-    Real name(Real *ptr, long count, void *otherData) { \
-        return Real(name ## Encapsulation, ArrayInterface<Real>(ptr, count), otherData); \
-    } \
-    Real name(std::valarray<Real> &arr, long otherData) { \
-        return Real(name ## Encapsulation, arr, otherData)); \
-    } \
-    Real name(std::vector<Real> &arr, long otherData) { \
-        return Real(name ## Encapsulation, arr, otherData)); \
-    }*/
+  void name ## Encapsulation(ArrayInterface<Encapsulation> &arr, void *otherData) { \
+    if (UsingMachinePrecision) name(ArrayInterface<MachineEstimate, sizeof Encapsulation>(&arr[0].m_mach, arr.size()), otherData); \
+    else name(ArrayInterface<Estimate, sizeof Encapsulation>(&arr[0].m_est, arr.size()), otherData); \
+  } \
+  Real name(Real *ptr, long count, void *otherData) { \
+    return Real(name ## Encapsulation, ArrayInterface<Real>(ptr, count), otherData); \
+  } \
+  Real name(std::valarray<Real> &arr, long otherData) { \
+    return Real(name ## Encapsulation, arr, otherData)); \
+  } \
+  Real name(std::vector<Real> &arr, long otherData) { \
+    return Real(name ## Encapsulation, arr, otherData)); \
+  }*/
 
 #define CreateArrayAndIntRealFunction(name) \
-    void name ## Encapsulation(ArrayInterface<Encapsulation> &arr, UserInt user) { \
-        if (UsingMachinePrecision) { \
-            ArrayInterface<MachineEstimate, sizeof (Encapsulation)> am(&arr[0].m_mach, arr.size()); \
-            name<MachineEstimate, ArrayInterface<MachineEstimate, sizeof (Encapsulation)> >(am, user); \
-        } else { \
-            ArrayInterface<Estimate, sizeof (Encapsulation)> ae(&arr[0].m_est, arr.size()); \
-            name<Estimate, ArrayInterface<Estimate, sizeof (Encapsulation)> > (ae, user);\
-        } \
+        void name ## Encapsulation(ArrayInterface<Encapsulation> &arr, UserInt user) { \
+    if (UsingMachinePrecision) { \
+        ArrayInterface<MachineEstimate, sizeof (Encapsulation)> am(&arr[0].rwMachineEstimate(), arr.size()); \
+        name<MachineEstimate, ArrayInterface<MachineEstimate, sizeof (Encapsulation)> >(am, user); \
+    } else { \
+        ArrayInterface<Estimate, sizeof (Encapsulation)> ae(&arr[0].rwEstimate(), arr.size()); \
+        name<Estimate, ArrayInterface<Estimate, sizeof (Encapsulation)> > (ae, user);\
     } \
-    void name(Real *ptr, long count, UserInt otherData) { \
-        ArrayInterface<Real> arr(ptr, count); \
-        RealApplyArrayFunction(name ## Encapsulation, arr, otherData); \
-    } \
-    void name(std::valarray<Real> &arr, UserInt otherData) { \
-        RealApplyArrayFunction(name ## Encapsulation, arr, otherData); \
-    } \
-    void name(std::vector<Real> &arr, UserInt otherData) { \
-        RealApplyArrayFunction(name ## Encapsulation, arr, otherData); \
-    } 
+} \
+void name(Real *ptr, long count, UserInt otherData) { \
+    ArrayInterface<Real> arr(ptr, count); \
+    RealApplyArrayFunction(name ## Encapsulation, arr, otherData); \
+} \
+void name(std::valarray<Real> &arr, UserInt otherData) { \
+    RealApplyArrayFunction(name ## Encapsulation, arr, otherData); \
+} \
+void name(std::vector<Real> &arr, UserInt otherData) { \
+    RealApplyArrayFunction(name ## Encapsulation, arr, otherData); \
+}
 
 #define CreateArrayRealFunction(name) \
-    void name ## Encapsulation(ArrayInterface<Encapsulation> &arr, UserInt otherData) { \
-        if (UsingMachinePrecision) { \
-            ArrayInterface<MachineEstimate, sizeof (Encapsulation)> am(&arr[0].m_mach, arr.size()); \
-            name<MachineEstimate, ArrayInterface<MachineEstimate, sizeof (Encapsulation)> >(am); \
-        } else { \
-            ArrayInterface<Estimate, sizeof (Encapsulation)> ae(&arr[0].m_est, arr.size()); \
-            name<Estimate, ArrayInterface<Estimate, sizeof (Encapsulation)> > (ae);\
-        } \
+        void name ## Encapsulation(ArrayInterface<Encapsulation> &arr, UserInt otherData) { \
+    if (UsingMachinePrecision) { \
+        ArrayInterface<MachineEstimate, sizeof (Encapsulation)> am(&arr[0].rwMachineEstimate(), arr.size()); \
+        name<MachineEstimate, ArrayInterface<MachineEstimate, sizeof (Encapsulation)> >(am); \
+    } else { \
+        ArrayInterface<Estimate, sizeof (Encapsulation)> ae(&arr[0].rwEstimate(), arr.size()); \
+        name<Estimate, ArrayInterface<Estimate, sizeof (Encapsulation)> > (ae);\
     } \
-    void name(Real *ptr, long count) { \
-        ArrayInterface<Real> arr(ptr, count); \
-        RealApplyArrayFunction(name ## Encapsulation, arr, NULL); \
-    } \
-    void name(std::valarray<Real> &arr) { \
-        RealApplyArrayFunction(name ## Encapsulation, arr, NULL)); \
-    } \
-    void name(std::vector<Real> &arr) { \
-        RealApplyArrayFunction(name ## Encapsulation, arr, NULL)); \
-    }
+} \
+void name(Real *ptr, long count) { \
+    ArrayInterface<Real> arr(ptr, count); \
+    RealApplyArrayFunction(name ## Encapsulation, arr, NULL); \
+} \
+void name(std::valarray<Real> &arr) { \
+    RealApplyArrayFunction(name ## Encapsulation, arr, NULL)); \
+} \
+void name(std::vector<Real> &arr) { \
+    RealApplyArrayFunction(name ## Encapsulation, arr, NULL)); \
+}
 
 
 // constants
@@ -367,21 +372,22 @@ Real asin(const Real &arg);
 Real atan(const Real &arg);
 
 static inline Real operator * (int lhs, const Real &rhs)
-{ return rhs * lhs; }
+        { return rhs * lhs; }
 static inline Real operator / (int lhs, const Real &rhs)
-{ return recip(rhs) * lhs; };
+        { return recip(rhs) * lhs; };
 
 static inline Real operator * (const Real &lhs, double rhs)
-{ return lhs * Real(rhs); }
+        { return lhs * Real(rhs); }
 static inline Real operator / (const Real &lhs, double rhs)
-{ return lhs * Real(rhs); }
+        { return lhs * Real(rhs); }
 static inline Real operator * (double lhs, const Real &rhs)
-{ return Real(lhs) * rhs; }
+        { return Real(lhs) * rhs; }
 static inline Real operator / (double lhs, const Real &rhs)
-{ return Real(lhs) / rhs; };
+        { return Real(lhs) / rhs; };
 
 // shorthands
-static inline Real sq(const Real &arg);
+//static inline 
+Real sq(const Real &arg);
 //{ return arg * arg; }
 
 static inline Real cosh(const Real &arg)
@@ -404,8 +410,10 @@ static inline bool operator != (const Real &lhs, const Real &rhs)
 { return (lhs - rhs).IsNonZero(); }
 
 static inline const char* NonZeroRealAsDecimal(const Real &arg, char *buffer, unsigned lenwanted) // force non-zero, then convert
-{ if (arg.IsNonZero()) return arg.AsDecimal(buffer, lenwanted); 
-  else return "n/a";    }
+{
+    if (arg.IsNonZero()) return arg.AsDecimal(buffer, lenwanted);
+    else return "n/a";
+}
 
 } // namespace
 

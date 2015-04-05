@@ -14,7 +14,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-*/
+ */
 
 /*
 
@@ -22,7 +22,7 @@
 
   This file defines the convolution operation used for multiplication.
 
-*/
+ */
 
 #ifndef FILE_CONVOLUTION_H
 #define FILE_CONVOLUTION_H
@@ -51,7 +51,7 @@ public:
     // perform convolution on the given arrays
     // output in a, b destroyed
     void Convolve(TYPE *a, TYPE *b, int size = 0);
-    
+
     int GetSize() 
     { return m_Size; }
 };

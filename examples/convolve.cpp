@@ -19,37 +19,37 @@ using namespace std;
 
 int main()
 {
-	clock_t starttime, endtime;
-	InitializeRealLib();
+    clock_t starttime, endtime;
+    InitializeRealLib();
 
-	starttime = clock();
+    starttime = clock();
 
-	{
-		int i;
-		Real a[size], b[size];
+    {
+        int i;
+        Real a[size], b[size];
 
-		Convolution<Real> conv(size, Pi * 2);
+        Convolution<Real> conv(size, Pi * 2);
 
-		for (i=0;i<size/2;++i) {
-			a[i] = i+1; b[i] = 5+i;
-		}
-		
-		conv.Convolve(a, b);
+        for (i=0;i<size/2;++i) {
+            a[i] = i+1; b[i] = 5+i;
+        }
 
-		cout << setprecision(7);
+        conv.Convolve(a, b);
 
-		for (i=0;i<size-1;++i)
-			cout << "result[" << setw(4)  << i << "]: " << 
-				setw(8) << a[i] << endl;
-	}
+        cout << setprecision(7);
 
-	int pr = FinalizeRealLib();
-	endtime = clock();
+        for (i=0;i<size-1;++i)
+            cout << "result[" << setw(4)  << i << "]: " <<
+            setw(8) << a[i] << endl;
+    }
 
-	cout << "prec: " << pr << " time elapsed: " << 
-      double(endtime - starttime) / CLOCKS_PER_SEC << endl;
+    int pr = FinalizeRealLib();
+    endtime = clock();
 
-	cin.get();
-	return 0;
+    cout << "prec: " << pr << " time elapsed: " <<
+            double(endtime - starttime) / CLOCKS_PER_SEC << endl;
+
+    cin.get();
+    return 0;
 }
 

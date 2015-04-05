@@ -14,7 +14,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-*/
+ */
 
 /*
 
@@ -30,7 +30,7 @@
         bits, not in words as in a LongFloat, and the mantissa
         always has 1 in its most significant bit.
 
-*/
+ */
 
 #ifndef FILE_ERROR_ESTIMATE_H
 #define FILE_ERROR_ESTIMATE_H
@@ -50,6 +50,10 @@ public:
 
     enum Inf { minusinf = -I32_MAX, plusinf = I32_MAX } ;
     enum RoundingMode { Down = 0, Up = 1 };
+
+    static inline i32 exp_saturated(exp_type a)
+    {    a = a < plusinf ? a : plusinf - 1;
+    return i32(a > minusinf ? a : minusinf + 1); }
 
     explicit ErrorEstimate(const u32 man = 0, const i32 exp = 0);
     // conversions (rounding up)
@@ -71,19 +75,20 @@ public:
     ErrorEstimate recip() const;
     // round-up division
     ErrorEstimate operator / (const ErrorEstimate &rhs) const
-       { return *this * rhs.recip(); }
+               { return *this * rhs.recip(); }
     // round-up <<
     ErrorEstimate operator << (i32 howmuch) const;  // shift left in bits
 
-   // comparisons
+    // comparisons
     bool operator >= (const ErrorEstimate &rhs) const;
+    bool operator > (const ErrorEstimate &rhs) const;
 
     ErrorEstimate& operator ++ ();  // add the minimum
 
     // conversions
     double AsDouble() const;
     LongFloat AsLongFloat() const;
-    
+
 };
 
 // two needed operations

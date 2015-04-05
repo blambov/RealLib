@@ -25,7 +25,7 @@
    do not require a precision specification, while Estimate
    functions use the second argument to know when to stop
    iterating.
-*/  
+ */
 
 #ifndef FILE_REAL_MATH_H
 #define FILE_REAL_MATH_H
@@ -55,7 +55,7 @@ typedef void (*NewtonIterator)(const Estimate &arg, Estimate &est, i32 &prec);
 // can be of the order of the complexity of the inverse function.
 Estimate PerformNewton(Estimate arg, NewtonIterator iter, 
                        Estimate initialEstimate, i32 initialPrec);
-                       
+
 
 typedef Estimate (*SeriesIterator)(const Estimate &arg, Estimate &workspace, i32 index);
 
@@ -68,7 +68,7 @@ Estimate abs(const Estimate &arg);
 
 // integer power by squaring and multiplication: O(M(n)*ln(pwr))
 Estimate pow(Estimate arg, i32 pwr);
-                     
+
 // reciprocal square root: evaluated using newton iterations; O(M(n))
 Estimate rsqrt(const Estimate &arg);
 // square root: sqrt(x) = x * rsqrt(x); O(ln(n))
@@ -95,7 +95,7 @@ Estimate rpi(unsigned int prec);
 template <> Estimate pi(unsigned int prec);
 //Estimate pi(unsigned int prec);
 
-// forward trigonometric: using McLauren expansion for sine and identities; O(M(n) * sqrt(n))
+// forward trigonometric: using McLaurin expansion for sine and identities; O(M(n) * sqrt(n))
 Estimate sin_primary(const Estimate &arg); // only in primary range: [-pi/2;pi/2]
 Estimate sin(const Estimate &arg);
 static inline Estimate cos(const Estimate &arg) { return sin(pi<Estimate>(arg.GetPrecision())/2 - arg); }
@@ -103,7 +103,7 @@ static inline Estimate cos(const Estimate &arg) { return sin(pi<Estimate>(arg.Ge
 template <class TYPE>
 static inline TYPE cosfromsin(const TYPE &s) { return sqrt(1 - sq(s)); }
 
-static inline Estimate tan(const Estimate &arg) { Estimate s(sin(arg)); return s/cosfromsin(s); }
+Estimate tan(const Estimate &arg);
 
 // inverse trigonometric: newton iterations with sin_primary; same complexity as forward
 Estimate asin_primary(const Estimate &arg); // only in primary range: [-sqrt(2);sqrt(2)]
@@ -158,7 +158,7 @@ static inline Estimate sq(const Estimate &arg)
 Estimate rsqrt(const Estimate &arg, u32 prec);
 // arg * rsqrt(arg)
 Estimate sqrt(const Estimate &arg, u32 prec);
-    
+
 // exponent, Newton-Raphson using ln
 Estimate exp(const Estimate &arg, u32 prec);
 
@@ -180,7 +180,7 @@ Estimate atan(const Estimate &arg, u32 prec);
 
 // atan2 using AGM on complex
 Estimate atan2(const Estimate &l, const Estimate &r, u32 prec);
-*/
+ */
 
 } // namespace
 

@@ -14,7 +14,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-*/
+ */
 
 #include "defs.h"
 #include "convolution.h"
@@ -80,18 +80,22 @@ template <class TYPE>
 Convolution<TYPE>::~Convolution()
 {
     delete [] m_pWeights;
-   delete [] m_pBR;
+    delete [] m_pBR;
 }
+
+#ifndef __RESTRICT
+#define restrict 
+#endif
 
 // convolve performs the operation.
 // output goes to a. b is destroyed
 template <class TYPE>
-void Convolution<TYPE>::Convolve(TYPE *a, TYPE *b, int size)
+void Convolution<TYPE>::Convolve(TYPE * restrict a, TYPE * restrict b, int size)
 {
-   if (size==0) size = m_Size;
+    if (size==0) size = m_Size;
     // forward ffts. remember rc multiplies both by additional factor of 2
     int wstride = m_Size / size;
-    
+
     fft_fwd_ip_rc(size, m_pWeights, m_pBR, a, wstride);
     fft_fwd_ip_rc(size, m_pWeights, m_pBR, b, wstride);
 
@@ -108,7 +112,7 @@ void Convolution<TYPE>::Convolve(TYPE *a, TYPE *b, int size)
 
 // multiply two complex vectors, in-place
 template <class TYPE>
-void mul_complex(int size, TYPE *a, TYPE *b, double scale)
+void mul_complex(int size, TYPE * restrict a, TYPE * restrict b, double scale)
 {
     for (int i=0; i<size; ++i) {
         TYPE re(a[realindex(i)]*b[realindex(i)] - a[imagindex(i)]*b[imagindex(i)]);
@@ -121,7 +125,7 @@ void mul_complex(int size, TYPE *a, TYPE *b, double scale)
 
 // gentleman-sande decimation-in-frequency forward in-place fft
 template <class TYPE>
-void fft_fwd_ip(int size, TYPE *weights, TYPE *a, int wstride)
+void fft_fwd_ip(int size, TYPE * restrict weights, TYPE * restrict a, int wstride)
 {
     for (int L=size; L>1; L >>= 1) {
         int r = size / L;
@@ -154,7 +158,7 @@ void fft_fwd_ip(int size, TYPE *weights, TYPE *a, int wstride)
 
 // cooley-tukey decimation-in-time inverse in-place fft
 template <class TYPE>
-void fft_inv_ip(int size, TYPE *weights, TYPE *a, int wstride)
+void fft_inv_ip(int size, TYPE * restrict weights, TYPE *restrict a, int wstride)
 {
     // permutation is skipped
 
@@ -173,7 +177,7 @@ void fft_inv_ip(int size, TYPE *weights, TYPE *a, int wstride)
                 TYPE di = a[imagindex(k * L + L2 + j)];
                 TYPE tr = wr * dr - wi * di;
                 TYPE ti = wr * di + wi * dr;
-                
+
                 a[realindex(k * L + j)] = cr + tr;
                 a[imagindex(k * L + j)] = ci + ti;
 
@@ -187,7 +191,7 @@ void fft_inv_ip(int size, TYPE *weights, TYPE *a, int wstride)
 // real-to-complex step after fft_fwd
 // the result is multiplied by 2
 template <class TYPE>
-void fft_realtocomplex(int size, TYPE *weights, int *br, TYPE *a, int wstride)
+void fft_realtocomplex(int size, TYPE * restrict weights, int * restrict br, TYPE * restrict a, int wstride)
 {
     int size2 = size/2;
     TYPE pr, pi, mr, mi;
@@ -222,7 +226,7 @@ void fft_realtocomplex(int size, TYPE *weights, int *br, TYPE *a, int wstride)
 
 // complex-to-real step before fft_inv
 template <class TYPE>
-void fft_complextoreal(int size, TYPE *weights, int *br, TYPE *a, int wstride)
+void fft_complextoreal(int size, TYPE * restrict weights, int * restrict br, TYPE * restrict a, int wstride)
 {
     int size2 = size/2;
     TYPE pr, pi, mr, mi, zr, zi;
@@ -257,7 +261,7 @@ void fft_complextoreal(int size, TYPE *weights, int *br, TYPE *a, int wstride)
 }
 
 template <class TYPE>
-void fft_fwd_ip_rc(int size, TYPE *weights, int *br, TYPE *a, int wstride)
+void fft_fwd_ip_rc(int size, TYPE * restrict weights, int * restrict br, TYPE * restrict a, int wstride)
 {
     // perform a complex-to-complex fft on the data
     fft_fwd_ip(size / 2, weights, a, 2*wstride);
@@ -267,7 +271,7 @@ void fft_fwd_ip_rc(int size, TYPE *weights, int *br, TYPE *a, int wstride)
 }
 
 template <class TYPE>
-void fft_inv_ip_cr(int size, TYPE *weights, int *br, TYPE *a, int wstride)
+void fft_inv_ip_cr(int size, TYPE * restrict weights, int * restrict br, TYPE * restrict a, int wstride)
 {
     // revert the operation of fft_realtocomplex
     fft_complextoreal(size / 2, weights, br, a, wstride);
@@ -350,5 +354,5 @@ void main()
     getchar();
 }
 
-*/
+ */
 

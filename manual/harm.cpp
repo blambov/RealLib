@@ -11,48 +11,48 @@ using namespace std;
 #define MACROTOSTRING(x) MACROTOSTRING2(x)
 
 
-Real Harmonic(const int mcnt)
+Real Harmonic(const long mcnt)
 {
-	Real one(1);
-	Real s;	// initialized to 0
-	for (int i=1; i<=mcnt; ++i) {
-		s += one/i;
-	}
-	return s;
+    Real one(1);
+    Real s(0.0);
+    for (int i=1; i<=mcnt; ++i) {
+        s += one/i;
+    }
+    return s;
 }
 
 
 
 int main()
 {
-	clock_t starttime, endtime;
-	
-	cout << "Computing the sum for " MACROTOSTRING(LENGTH) " members" << endl;
+    clock_t starttime, endtime;
 
-	starttime = clock();
-	InitializeRealLib();
-	{
-		Real h(Harmonic(LENGTH));
-		endtime = clock();
-		cout << "construction time: " <<
-			double(endtime - starttime) / CLOCKS_PER_SEC << endl;
+    cout << "Computing the sum for " MACROTOSTRING(LENGTH) " members" << endl;
 
-		for (int n=9; n<500; n*=7) {
-			starttime = clock();
-			cout << unitbuf << setprecision(n);
-			cout << n <<" digits: \t" << h << endl;
-			endtime = clock();
-			cout << setprecision(6);
-			cout << "prec: " << GetCurrentPrecision() << " time elapsed: " << 
-				double(endtime - starttime) / CLOCKS_PER_SEC << endl;
-		}
-		starttime = clock();
-	}
-	FinalizeRealLib();
-	endtime = clock();
-	cout << "destruction time: " <<
-		double(endtime - starttime) / CLOCKS_PER_SEC << endl;
+    starttime = clock();
+    InitializeRealLib();
+    {
+        Real h(Harmonic(LENGTH));
+        endtime = clock();
+        cout << "construction time: " <<
+                double(endtime - starttime) / CLOCKS_PER_SEC << endl;
+
+        for (int n=8; n<500; n*=7) {
+            starttime = clock();
+            cout << unitbuf << setprecision(n);
+            cout << n <<" digits: \t" << h << endl;
+            endtime = clock();
+            cout << setprecision(6);
+            cout << "prec: " << GetCurrentPrecision() << " time elapsed: " << 
+                    double(endtime - starttime) / CLOCKS_PER_SEC << endl;
+        }
+        starttime = clock();
+    }
+    FinalizeRealLib();
+    endtime = clock();
+    cout << "destruction time: " <<
+            double(endtime - starttime) / CLOCKS_PER_SEC << endl;
 
 
-	return 0;
+    return 0;
 }

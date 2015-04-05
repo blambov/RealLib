@@ -14,7 +14,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-*/
+ */
 
 /*
 
@@ -23,7 +23,7 @@
   Wrapper around implementation details that handle the allocation of
   space for mantissas.
 
-*/
+ */
 
 #ifndef FILE_DATA_MANAGER_H
 #define FILE_DATA_MANAGER_H
@@ -46,7 +46,7 @@ private:
 
 public:
     DataBuffer(u32 howmany, u32 precision)
-        : m_uCount(howmany), m_uPrec(precision), m_pData(new u32 [howmany * precision])
+    : m_uCount(howmany), m_uPrec(precision), m_pData(new u32 [howmany * precision])
     {}
 
     ~DataBuffer() { if (m_pData) delete [] m_pData; }
@@ -78,11 +78,15 @@ public:
     bool isValid() { return !!m_pData; }
 
     void push(u32 index) 
-    {   assert(m_uCount < m_uSize); 
-        m_pData[m_uCount++] = index; }
+    {
+        assert(m_uCount < m_uSize); 
+        m_pData[m_uCount++] = index; 
+    }
     u32 pop()
-    {   assert(m_uCount > 0);
-        return m_pData[--m_uCount]; }
+    {
+        assert(m_uCount > 0);
+        return m_pData[--m_uCount];
+    }
 
     bool Grow(u32 howmuch);
     u32 GetCount() { return m_uCount; }

@@ -14,7 +14,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-*/
+ */
 
 #include <stdlib.h>
 
@@ -60,10 +60,10 @@ bool FreeStack::Grow(u32 howmuch)
     if (!pNew) return false;
 
     u32 u;
-    
+
     for (u = 0; u < howmuch; ++u)
         pNew[u] = m_uSize + howmuch - u - 1;
-    
+
     // this wouldn't be usually needed 
     // (Grow should be invoked at m_uCount==0)
     // do it anyway
@@ -91,7 +91,7 @@ u32 DataManager::get()
     if (GetFreeCount() == 0)
         if (!m_Buf.Grow(m_uGrow) || !m_Free.Grow(m_uGrow)) 
             return u32(-1);     // should be exception
-        
+
     return m_Free.pop();
 }
 

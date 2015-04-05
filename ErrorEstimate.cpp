@@ -14,7 +14,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-*/
+ */
 
 #include "defs.h"
 
@@ -55,11 +55,11 @@ ErrorEstimate::ErrorEstimate(const LongFloat &src, RoundingMode round)
 
         // we might have overflowed
         if (m == 0) {
-            m = 1<<31;
+            m = 1u<<31;
             ++exp;
         }
 
-      m_Exp = i32_saturated(exp);
+        m_Exp = i32_saturated(exp);
         m_Man = m;
         break; }
     case LongFloat::Zero:
@@ -85,7 +85,7 @@ ErrorEstimate::ErrorEstimate(const double man)
         m_Man = u32(ldexp(frexp(fabs(man), &mexp), 32) + 1);
         // correct for possible overflow
         if (m_Man == 0) {
-            m_Man = 1<<31;
+            m_Man = 1u<<31;
             m_Exp = mexp + 1;
         } else m_Exp = mexp;
         break; }
@@ -135,7 +135,7 @@ exp_type DoEEManSub(u32 &man, u32 full, u32 part, exp_type start, exp_type exp)
 
     // normalize
     if (man == 0) return ErrorEstimate::minusinf;
-    while ((man & (1<<31))==0) {
+    while ((man & (1u<<31))==0) {
         --exp;
         man <<= 1;
     }
@@ -168,7 +168,7 @@ ErrorEstimate ErrorEstimate::operator + (const ErrorEstimate &rhs) const
     // update if carry
     if (carry) {
         if (man & 1) ++man;
-        man = (man >> 1) | (1 << 31);
+        man = (man >> 1) | (1u << 31);
         exp = exp + 1;
     }
 
@@ -194,7 +194,7 @@ ErrorEstimate ErrorEstimate::operator - (const ErrorEstimate &rhs) const
 ErrorEstimate ErrorEstimate::operator * (const ErrorEstimate &rhs) const
 {
     exp_type e = exp_type(m_Exp) + exp_type(rhs.m_Exp) - 1;
-    
+
     // handle overflow and special cases
     if (m_Exp == plusinf || rhs.m_Exp == plusinf || e >= plusinf) return ErrorEstimate(0, plusinf);
     if (m_Exp == minusinf || rhs.m_Exp == minusinf || e <= minusinf) return ErrorEstimate(0, minusinf);
@@ -203,7 +203,7 @@ ErrorEstimate ErrorEstimate::operator * (const ErrorEstimate &rhs) const
     // at most 1 in 63rd
     u64 m = u64(m_Man) * u64(rhs.m_Man);
     // round up if necessary
-    if (u32(m<<1)) m = (m >> 31) + 1;
+    if (u32((m<<1) & 0xFFFFFFFF)) m = (m >> 31) + 1;
     else m = (m >> 31);
 
     // make room for the 63rd bit if it is not 0
@@ -220,11 +220,11 @@ ErrorEstimate ErrorEstimate::operator << (i32 howmuch) const
 { 
     // simply add to exponent saturating
     exp_type e = exp_type(m_Exp) + exp_type(howmuch);
-    
-    if (m_Exp == plusinf || e >= plusinf) return ErrorEstimate(0, plusinf);
-    if (m_Exp == minusinf || e <= minusinf) return ErrorEstimate(0, minusinf);
 
-    return ErrorEstimate(m_Man, i32(e));
+    //if (m_Exp == plusinf || e >= plusinf) return ErrorEstimate(0, plusinf);
+    //if (m_Exp == minusinf || e <= minusinf) return ErrorEstimate(0, minusinf);
+
+    return ErrorEstimate(m_Man, i32_saturated(e));
 }
 
 
@@ -238,7 +238,7 @@ ErrorEstimate ErrorEstimate::recip() const
     u32 man = u32(((u64(1) << 62) + m_Man - 1) / m_Man);
 
     // normalize
-    if (!(man & (1<<31))) {
+    if (!(man & (1u<<31))) {
         man = (man << 1) + 1;
         --exp;
     }
@@ -249,7 +249,7 @@ ErrorEstimate ErrorEstimate::recip() const
 ErrorEstimate& ErrorEstimate::operator ++ ()
 {
     if (++m_Man == 0) {
-        m_Man = 1<<31;
+        m_Man = 1u<<31;
         ++m_Exp;
     }
     return *this;
@@ -277,7 +277,16 @@ bool ErrorEstimate::operator >= (const ErrorEstimate &rhs) const
 {
     if (m_Exp > rhs.m_Exp) return true;
     else if (m_Exp == rhs.m_Exp && 
-        (m_Exp == plusinf || m_Exp == minusinf || m_Man >= rhs.m_Man))
+            (m_Exp == plusinf || m_Exp == minusinf || m_Man >= rhs.m_Man))
+        return true;
+    else return false;
+}
+
+bool ErrorEstimate::operator > (const ErrorEstimate &rhs) const
+{
+    if (m_Exp > rhs.m_Exp) return true;
+    else if (m_Exp == rhs.m_Exp && 
+            (m_Exp != plusinf && m_Exp != minusinf && m_Man > rhs.m_Man))
         return true;
     else return false;
 }
@@ -293,15 +302,15 @@ ErrorEstimate min(const ErrorEstimate &a, const ErrorEstimate &b)
 }
 
 ErrorEstimate RoundingError(const LongFloat &lf, i32 re) 
-                                       // rounding error is assumed to be no more than
-                                        // one in the least significant bit of the mantissa
-                                        // Note! Newton-Raphson reciprocal is incorrect in the
-                                        // least significant word (handled by recip())
+// rounding error is assumed to be no more than
+// one in the least significant bit of the mantissa
+// Note! Newton-Raphson reciprocal is incorrect in the
+// least significant word (handled by recip())
 { 
-   exp_type exp = exp_type(lf.Exponent()) * 32 + re + 1;
-   if (exp <= ErrorEstimate::minusinf) return ErrorEstimate(0, ErrorEstimate::minusinf);
-   if (exp >= ErrorEstimate::plusinf) return ErrorEstimate(0, ErrorEstimate::plusinf);
-   else return ErrorEstimate(1<<31, (lf.Exponent()) * 32 + re + 1); 
+    exp_type exp = exp_type(lf.Exponent()) * 32 + re + 1;
+    if (exp <= ErrorEstimate::minusinf) return ErrorEstimate(0, ErrorEstimate::minusinf);
+    if (exp >= ErrorEstimate::plusinf) return ErrorEstimate(0, ErrorEstimate::plusinf);
+    else return ErrorEstimate(1u<<31, (lf.Exponent()) * 32 + re + 1); 
 }
 
 } // namespace

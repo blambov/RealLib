@@ -14,7 +14,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-*/
+ */
 
 #ifndef FILE_KERNELS_H
 #define FILE_KERNELS_H
@@ -67,8 +67,8 @@ u32 MulMantissa(u32 *man,
                 const u32 *b,
                 i32 inputstart,
                 i32 inputlen);
-// returns whether the kernels would use convolution on this inputlen               
-bool MultipliedByConvolution(i32 inputlen);             
+// returns whether the kernels would use convolution on this inputlen                
+bool MultipliedByConvolution(i32 inputlen);                
 // DivMantissa
 // perform division. Returns the exponent offset.
 // inputstart and inputlen as before, but division needs a temporary 
@@ -78,12 +78,12 @@ bool MultipliedByConvolution(i32 inputlen);
 // if MultipliedByConvolution returns false.
 // Otherwise it will use Newton iterations.
 i32 DivMantissa(u32 *man,
-            const u32 *a,
-            const u32 *b,
-            i32 inputstart,
-            i32 inputlen,
-            u32 *temp1,
-            u32 *temp2);
+                const u32 *a,
+                const u32 *b,
+                i32 inputstart,
+                i32 inputlen,
+                u32 *temp1,
+                u32 *temp2);
 
 // scale mantissa: multiplication by u32 multiplier
 // implemented for performance. returns carry
@@ -93,12 +93,12 @@ u32 ScaleMantissa(u32 *man,
 // inverse scaling: division by u32 divisor
 // returns exponent offset
 i32 InvScaleMantissa(u32 *man,
-                  const u32 *src,
-                  u32 divisor);
+                     const u32 *src,
+                     u32 divisor);
 // binary scale mantissa, i.e. multiply by 1<<scale, where scale < 32
 u32 BScaleMantissa(u32 *man,
-                  const u32 *src,
-                  u32 scale);
+                   const u32 *src,
+                   u32 scale);
 
 }   // namespace
 
